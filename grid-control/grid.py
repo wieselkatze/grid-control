@@ -277,40 +277,7 @@ def calculate_voltage(percent):
     Values below 33% will be defined as "0V" (fan will be stopped).
     """
 
-    if percent < 33:
-        return 0.0
-    elif percent >= 33 and percent < 36:
-        return 4.0
-    elif percent >= 36 and percent < 40:
-        return 4.5
-    elif percent >= 40 and percent < 44:
-        return 5.0
-    elif percent >= 44 and percent < 48:
-        return 5.5
-    elif percent >= 48 and percent < 52:
-        return 6.0
-    elif percent >= 52 and percent < 56:
-        return 6.5
-    elif percent >= 56 and percent < 60:
-        return 7.0
-    elif percent >= 60 and percent < 64:
-        return 7.5
-    elif percent >= 64 and percent < 68:
-        return 8.0
-    elif percent >= 68 and percent < 72:
-        return 8.5
-    elif percent >= 72 and percent < 76:
-        return 9.0
-    elif percent >= 76 and percent < 80:
-        return 9.5
-    elif percent >= 80 and percent < 84:
-        return 10.0
-    elif percent >= 84 and percent < 88:
-        return 10.5
-    elif percent >= 88 and percent < 93:
-        return 11.0
-    elif percent >= 93 and percent < 98:
-        return 11.5
-    else:
-        return 12.0
+    if percent == 0:
+        return 0
 
+    return 4 + 0.5 * round(percent / 6.25)
