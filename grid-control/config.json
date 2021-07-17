@@ -1,0 +1,66 @@
+{
+    "1": {
+        "name": "Fan 1",
+        "fan_curves": {
+            "cpu": {
+                "points": [
+                    {"temp": 60, "speed": 20},
+                    {"temp": 65, "speed": 25},
+                    {"temp": 70, "speed": 40},
+                    {"temp": 75, "speed": 50},
+                    {"temp": 80, "speed": 65},
+                    {"temp": 85, "speed": 80},
+                    {"temp": 90, "speed": 100}
+                ]
+            }
+        }
+    },
+    "2": {
+        "name": "Fan 2",
+        "fan_curves": {
+            "cpu": {
+                "points": [
+                    {"temp": 60, "speed": 20},
+                    {"temp": 65, "speed": 25},
+                    {"temp": 70, "speed": 40},
+                    {"temp": 75, "speed": 50},
+                    {"temp": 80, "speed": 65},
+                    {"temp": 85, "speed": 80},
+                    {"temp": 90, "speed": 100}
+                ]
+            }
+        }
+    },
+    "3": {
+        "name": "Fan 3",
+        "fan_curves": {
+            "cpu": {
+                "points": [
+                    {"temp": 60, "speed": 20},
+                    {"temp": 65, "speed": 25},
+                    {"temp": 70, "speed": 40},
+                    {"temp": 75, "speed": 50},
+                    {"temp": 80, "speed": 65},
+                    {"temp": 85, "speed": 80},
+                    {"temp": 90, "speed": 100}
+                ]
+            }
+        }
+    },
+    "6": {
+        "name": "Fan 6",
+        "fan_curves": {
+            "cpu": {
+                "points": [
+                    {"temp": 60, "speed": 20},
+                    {"temp": 65, "speed": 25},
+                    {"temp": 70, "speed": 40},
+                    {"temp": 75, "speed": 50},
+                    {"temp": 80, "speed": 65},
+                    {"temp": 85, "speed": 80},
+                    {"temp": 90, "speed": 100}
+                ]
+            }
+        }
+    }
+}

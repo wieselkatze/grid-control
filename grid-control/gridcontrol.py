@@ -13,6 +13,7 @@ import openhwmon
 import polling
 import serial
 import settings
+import config
 from PyQt5 import QtCore, QtWidgets, QtGui
 from ui.mainwindow import Ui_MainWindow
 
@@ -56,7 +57,7 @@ class GridControl(QtWidgets.QMainWindow):
 
         # QSettings object for storing the UI configuration in the OS native repository (Registry for Windows, ini-file for Linux)
         # In Windows, parameters will be stored at HKEY_CURRENT_USER/SOFTWARE/GridControl/App
-        self.config = QtCore.QSettings('GridControl', 'App')
+        self.config = config.load_configuration()
 
         # Get a list of available serial ports (e.g. "COM1" in Windows)
         self.serial_ports = grid.get_serial_ports()
@@ -65,7 +66,7 @@ class GridControl(QtWidgets.QMainWindow):
         self.ui.comboBoxComPorts.addItems(self.serial_ports)
 
         # Read saved UI configuration
-        settings.read_settings(self.config, self.ui, self.hwmon)
+        settings.read_settings(QtCore.QSettings('GridControl', 'App'), self.ui, self.hwmon)
 
 
 
@@ -124,26 +125,19 @@ class GridControl(QtWidgets.QMainWindow):
         self.ui.lcdNumberFan6.display(self.ui.horizontalSliderFan6.value())
 
         # Update "fan labels" from "Fan Config" tab
-        self.ui.groupBoxFan1.setTitle(self.ui.lineEditFan1.text())
-        self.ui.groupBoxFan2.setTitle(self.ui.lineEditFan2.text())
-        self.ui.groupBoxFan3.setTitle(self.ui.lineEditFan3.text())
-        self.ui.groupBoxFan4.setTitle(self.ui.lineEditFan4.text())
-        self.ui.groupBoxFan5.setTitle(self.ui.lineEditFan5.text())
-        self.ui.groupBoxFan6.setTitle(self.ui.lineEditFan6.text())
+        self.ui.groupBoxFan1.setTitle(self.config.get_fan_name(1))
+        self.ui.groupBoxFan2.setTitle(self.config.get_fan_name(2))
+        self.ui.groupBoxFan3.setTitle(self.config.get_fan_name(3))
+        self.ui.groupBoxFan4.setTitle(self.config.get_fan_name(4))
+        self.ui.groupBoxFan5.setTitle(self.config.get_fan_name(5))
+        self.ui.groupBoxFan6.setTitle(self.config.get_fan_name(6))
 
-        self.ui.groupBoxCurrentFan1.setTitle(self.ui.lineEditFan1.text())
-        self.ui.groupBoxCurrentFan2.setTitle(self.ui.lineEditFan2.text())
-        self.ui.groupBoxCurrentFan3.setTitle(self.ui.lineEditFan3.text())
-        self.ui.groupBoxCurrentFan4.setTitle(self.ui.lineEditFan4.text())
-        self.ui.groupBoxCurrentFan5.setTitle(self.ui.lineEditFan5.text())
-        self.ui.groupBoxCurrentFan6.setTitle(self.ui.lineEditFan6.text())
-
-        self.ui.groupBoxConfigFan1.setTitle(self.ui.lineEditFan1.text())
-        self.ui.groupBoxConfigFan2.setTitle(self.ui.lineEditFan2.text())
-        self.ui.groupBoxConfigFan3.setTitle(self.ui.lineEditFan3.text())
-        self.ui.groupBoxConfigFan4.setTitle(self.ui.lineEditFan4.text())
-        self.ui.groupBoxConfigFan5.setTitle(self.ui.lineEditFan5.text())
-        self.ui.groupBoxConfigFan6.setTitle(self.ui.lineEditFan6.text())
+        self.ui.groupBoxCurrentFan1.setTitle(self.config.get_fan_name(1))
+        self.ui.groupBoxCurrentFan2.setTitle(self.config.get_fan_name(2))
+        self.ui.groupBoxCurrentFan3.setTitle(self.config.get_fan_name(3))
+        self.ui.groupBoxCurrentFan4.setTitle(self.config.get_fan_name(4))
+        self.ui.groupBoxCurrentFan5.setTitle(self.config.get_fan_name(5))
+        self.ui.groupBoxCurrentFan6.setTitle(self.config.get_fan_name(6))
 
         #  Connect events from sliders to update "Fan percentage" LCD value
         self.ui.horizontalSliderFan1.valueChanged.connect(self.ui.lcdNumberFan1.display)
@@ -202,15 +196,6 @@ class GridControl(QtWidgets.QMainWindow):
         self.ui.horizontalSliderFan6.valueChanged.connect(
             lambda: grid.set_fan(ser=self.ser, fan=6, voltage=grid.calculate_voltage(self.ui.lcdNumberFan6.value()), lock=self.lock))
 
-        # Connect "Change value" events from "Fan config" tab (all "spin boxes") to verify that the values are valid
-        for fan in range(1, 7):
-            getattr(self.ui, "spinBoxMinSpeedFan" + str(fan)).valueChanged.connect(self.validate_fan_config)
-            getattr(self.ui, "spinBoxStartIncreaseSpeedFan" + str(fan)).valueChanged.connect(self.validate_fan_config)
-            getattr(self.ui, "spinBoxIntermediateSpeedFan" + str(fan)).valueChanged.connect(self.validate_fan_config)
-            getattr(self.ui, "spinBoxMaxSpeedFan" + str(fan)).valueChanged.connect(self.validate_fan_config)
-            getattr(self.ui, "spinBoxIntermediateTempFan" + str(fan)).valueChanged.connect(self.validate_fan_config)
-            getattr(self.ui, "spinBoxMaxTempFan" + str(fan)).valueChanged.connect(self.validate_fan_config)
-
         # Connect fan rpm signal (from polling thread) to fan rpm label
         self.thread.rpm_signal_fan1.connect(self.ui.labelRPMFan1.setText)
         self.thread.rpm_signal_fan2.connect(self.ui.labelRPMFan2.setText)
@@ -249,52 +234,6 @@ class GridControl(QtWidgets.QMainWindow):
         # Connect exception signal to show exception message from running thread
         # This is needed as it's not possible to show a message box widget from the QThread directly
         self.thread.exception_signal.connect(self.thread_exception_handling)
-
-    def validate_fan_config(self):
-        """Validate fan configuration values, prevent incorrect/invalid values."""
-
-        # Name of widget (spin box) calling function
-        sender = self.sender().objectName()
-
-        # Fan id is the last character in the name
-        fan = sender[-1:]
-
-        # Get current values from spin boxes
-        min_speed_fan = getattr(self.ui, "spinBoxMinSpeedFan" + str(fan)).value()
-        start_increase_speed_fan = getattr(self.ui, "spinBoxStartIncreaseSpeedFan" + str(fan)).value()
-        intermediate_speed_fan = getattr(self.ui, "spinBoxIntermediateSpeedFan" + str(fan)).value()
-        max_speed_fan = getattr(self.ui, "spinBoxMaxSpeedFan" + str(fan)).value()
-        intermediate_temp_fan = getattr(self.ui, "spinBoxIntermediateTempFan" + str(fan)).value()
-        max_temp_fan = getattr(self.ui, "spinBoxMaxTempFan" + str(fan)).value()
-
-        # Logic for preventing incorrect/invalid values
-        if sender.startswith("spinBoxMinSpeedFan"):
-            if min_speed_fan >= intermediate_speed_fan:
-                getattr(self.ui, sender).setValue(intermediate_speed_fan - 1)
-
-        elif sender.startswith("spinBoxStartIncreaseSpeedFan"):
-           if start_increase_speed_fan >= intermediate_temp_fan:
-               getattr(self.ui, sender).setValue(intermediate_temp_fan - 1)
-
-        elif sender.startswith("spinBoxIntermediateSpeedFan"):
-            if intermediate_speed_fan >= max_speed_fan:
-                getattr(self.ui, sender).setValue(max_speed_fan - 1)
-            if intermediate_speed_fan <= min_speed_fan:
-                getattr(self.ui, sender).setValue(min_speed_fan + 1)
-
-        elif sender.startswith("spinBoxMaxSpeedFan"):
-           if max_speed_fan <= intermediate_speed_fan:
-               getattr(self.ui, sender).setValue(intermediate_speed_fan + 1)
-
-        elif sender.startswith("spinBoxIntermediateTempFan"):
-            if intermediate_temp_fan >= max_temp_fan:
-                getattr(self.ui, sender).setValue(max_temp_fan - 1)
-            if intermediate_temp_fan <= start_increase_speed_fan:
-                getattr(self.ui, sender).setValue(start_increase_speed_fan + 1)
-
-        elif sender.startswith("spinBoxMaxTempFan"):
-            if max_temp_fan <= intermediate_temp_fan:
-                getattr(self.ui, sender).setValue(intermediate_temp_fan + 1)
 
     def setup_ui_design(self):
         """Define UI parameters that cannot be configured in QT Creator directly."""
@@ -529,74 +468,19 @@ class GridControl(QtWidgets.QMainWindow):
         # If automatic mode is selected
         if self.ui.radioButtonAutomatic.isChecked():
             # For each fan (1 ... 6)
-            for fan in range(1, 7):
-                # Linear equation calculation
-                # y = k*x + m
-                # k = (y2 - y1) / (x2 - x1)
+            for i in range(1, 7):
+                fan = self.config.get_fan(i)
 
-                # First equation (a):
-                # From "Start increase speed at" to "Intermediate fan speed at" (temperature on x-axis)
+                if fan == None:
+                    continue
 
-                # Temperatures (x-axis)
-                x1_a = int(getattr(self.ui, "spinBoxStartIncreaseSpeedFan" + str(fan)).value())
-                x2_a = int(getattr(self.ui, "spinBoxIntermediateTempFan" + str(fan)).value())
-
-                # Speed in percent (y-axis)
-                y1_a = int(getattr(self.ui, "spinBoxMinSpeedFan" + str(fan)).value())
-                y2_a = int(getattr(self.ui, "spinBoxIntermediateSpeedFan" + str(fan)).value())
-
-                # Calculate "k" and "m"
-                k_a = (y2_a - y1_a) / (x2_a - x1_a)
-                m_a = y1_a - k_a * x1_a
-
-                # Second equation (b)
-                # From "Intermediate fan speed at" to "Maximum fan speed at" (temperature on x-axis)
-
-                # Temperatures (x-axis)
-                x1_b = int(getattr(self.ui, "spinBoxIntermediateTempFan" + str(fan)).value())
-                x2_b = int(getattr(self.ui, "spinBoxMaxTempFan" + str(fan)).value())
-
-                # Speed in percent (y-axis)
-                y1_b = int(getattr(self.ui, "spinBoxIntermediateSpeedFan" + str(fan)).value())
-                y2_b = int(getattr(self.ui, "spinBoxMaxSpeedFan" + str(fan)).value())
-
-                # Calculate "k" and "m"
-                k_b = (y2_b - y1_b) / (x2_b - x1_b)
-                m_b = y1_b - k_b * x1_b
-
-
-                min_temperature = int(getattr(self.ui, "spinBoxStartIncreaseSpeedFan" + str(fan)).value())
-
-                intermediate_temperature = int(getattr(self.ui, "spinBoxIntermediateTempFan" + str(fan)).value())
-
-                max_temperature = int(getattr(self.ui, "spinBoxMaxTempFan" + str(fan)).value())
-
-                # If "Use CPU temperature" is selected, use current CPU temperature (from LCD widget in UI)
-                if getattr(self.ui, "radioButtonCPUFan" + str(fan)).isChecked():
-                    current_temperature = self.ui.lcdNumberCurrentCPU.value()
-
-                # Else, use current GPU temperature (from LCD widget i UI)
-                else:
-                    current_temperature = self.ui.lcdNumberCurrentGPU.value()
-
-                if current_temperature <= min_temperature:
-                    # Set fan to minimum fan speed (constant value)
-                    fan_speed = int(getattr(self.ui, "spinBoxMinSpeedFan" + str(fan)).value())
-
-                elif current_temperature <= intermediate_temperature:
-                    # Calculate temperature according to first linear equation
-                    fan_speed = k_a * current_temperature + m_a
-
-                elif current_temperature <= max_temperature:
-                    # Calculate temperature according to second linear equation
-                    fan_speed = k_b * current_temperature + m_b
-
-                else:
-                    # Set fan to maximum fan speed (constant value)
-                    fan_speed = int(getattr(self.ui, "spinBoxMaxSpeedFan" + str(fan)).value())
+                fan_speed = fan.get_fan_speed(
+                        cpu_temp=self.ui.lcdNumberCurrentCPU.value(),
+                        gpu_temp=self.ui.lcdNumberCurrentGPU.value()
+                )
 
                 # Update horizontal slider value
-                getattr(self.ui, "horizontalSliderFan" + str(fan)).setValue(round(fan_speed))
+                getattr(self.ui, "horizontalSliderFan" + str(i)).setValue(round(fan_speed))
 
     def simulate_temperatures(self):
         """Simulate CPU and GPU temperatures, used for verifying the functionality of the fan control system."""
@@ -749,10 +633,6 @@ class GridControl(QtWidgets.QMainWindow):
         if self.thread.isRunning():
             self.thread.stop()
             print("Thread stopped")
-
-        # Save UI settings
-        settings.save_settings(self.config, self.ui)
-        print("Settings saved")
 
         # Hide tray icon
         self.trayIcon.hide()
