@@ -4,7 +4,8 @@
         "fan_curves": {
             "cpu": {
                 "points": [
-                    {"temp": 60, "speed": 20},
+                    {"temp": 0, "speed": 10},
+                    {"temp": 60, "speed": 10},
                     {"temp": 65, "speed": 25},
                     {"temp": 70, "speed": 40},
                     {"temp": 75, "speed": 50},
@@ -20,7 +21,8 @@
         "fan_curves": {
             "cpu": {
                 "points": [
-                    {"temp": 60, "speed": 20},
+                    {"temp": 0, "speed": 10},
+                    {"temp": 60, "speed": 10},
                     {"temp": 65, "speed": 25},
                     {"temp": 70, "speed": 40},
                     {"temp": 75, "speed": 50},
@@ -36,7 +38,8 @@
         "fan_curves": {
             "cpu": {
                 "points": [
-                    {"temp": 60, "speed": 20},
+                    {"temp": 0, "speed": 10},
+                    {"temp": 60, "speed": 10},
                     {"temp": 65, "speed": 25},
                     {"temp": 70, "speed": 40},
                     {"temp": 75, "speed": 50},
@@ -52,7 +55,8 @@
         "fan_curves": {
             "cpu": {
                 "points": [
-                    {"temp": 60, "speed": 20},
+                    {"temp": 0, "speed": 10},
+                    {"temp": 60, "speed": 10},
                     {"temp": 65, "speed": 25},
                     {"temp": 70, "speed": 40},
                     {"temp": 75, "speed": 50},

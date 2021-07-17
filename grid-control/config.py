@@ -1,5 +1,6 @@
 from typing import List, Dict
 import jsons
+import os
 
 class FanCurvePoint:
     def __init__(self, temp: float, speed: int):
@@ -93,15 +94,10 @@ class FanConfigurationFile:
         return self.fan_configurations[index]
 
 def load_configuration():
-    file = open("config.json", 'r')
-
-    if file != None:
-        try:
-            config = FanConfigurationFile.from_json(file.read())
-        except:
-            config = FanConfigurationFile()
-        
+    try:
+        file = open(os.path.join(os.getcwd(), "config.json"), 'r')
+        config = FanConfigurationFile.from_json(file.read())
         file.close()
         return config
-
-    return FanConfigurationFile()
+    except:
+        return FanConfigurationFile()
