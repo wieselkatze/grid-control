@@ -87,6 +87,8 @@ class FanConfigurationFile:
         if not index in self.fan_configurations:
             return "Fan " + str(index)
 
+        return self.get_fan(index).name
+
     def get_fan(self, index:int):
         if not index in self.fan_configurations:
             return None
